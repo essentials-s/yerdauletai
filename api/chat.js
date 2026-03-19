@@ -5,14 +5,26 @@ const client = new OpenAI({
 });
 
 export default async function handler(req, res) {
-  const { message, language } = req.body;
+  try {
+    const { message, language, model } = req.body;
 
-  const prompt = `Language: ${language}\nUser: ${message}\nAI:`;
+    const selectedModel = model || "gpt-5";
 
-  const response = await client.chat.completions.create({
-    model: "gpt-5",
-    messages: [{ role: "user", content: prompt }]
-  });
+    const systemPrompt = `Отвечай на языке: ${language}`;
 
-  res.status(200).json({ text: response.choices[0].message.content });
+    const response = await client.chat.completions.create({
+      model: selectedModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: message }
+      ]
+    });
+
+    res.status(200).json({
+      text: response.choices[0].message.content
+    });
+
+  } catch (e) {
+    res.status(500).json({ error: "Ошибка сервера" });
+  }
 }
